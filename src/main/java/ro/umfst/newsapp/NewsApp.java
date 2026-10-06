@@ -2,9 +2,9 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  */
 
-package com.mycompany.newsapp;
+package ro.umfst.newsapp;
 
-import com.mycompany.newsapp.database.Database;
+import ro.umfst.newsapp.database.Database;
 import java.sql.Connection;
 import java.sql.SQLException;
 
