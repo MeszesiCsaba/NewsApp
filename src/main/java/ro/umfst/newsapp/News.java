@@ -3,42 +3,43 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
 package ro.umfst.newsapp;
-import java.time.LocalDate;
+import java.sql.Timestamp;
 /**
  *
  * @author mcsab
  */
 public class News {
-    private int id;
     private String title;
     private String description;
     private String source;
     private String author;
-    private LocalDate publishdate;
-    private String URL;
-    private LocalDate creationdate;
-    private LocalDate lastedit;
+    private String publisher;
+    private Timestamp publishdate;
+    private String url;
+    private Timestamp creationdate;
+    private Timestamp lastedit;
     private String language;
     private String coverimage;
     
-    public News(int id,
+    public News(
             String title,
             String description,
             String source,
             String author,
-            LocalDate publishdate,
-            String URL,
-            LocalDate creationdate,
-            LocalDate lastedit,
+            String publisher,
+            Timestamp publishdate,
+            String url,
+            Timestamp creationdate,
+            Timestamp lastedit,
             String language,
             String coverimage){
-        setId(id);
         setTitle(title);
         setDescription(description);
         setSource(source);
         setAuthor(author);
+        setPublisher(publisher);
         setPublishDate(publishdate);
-        setURL(URL);
+        setURL(url);
         setCreationDate(creationdate);
         setLastEdit(lastedit);
         setLanguage(language);
@@ -46,9 +47,7 @@ public class News {
     }
     
     //Getterek
-    public int getId(){
-        return id;
-    }
+
     public String getTitle(){
         return title;
     }
@@ -61,16 +60,19 @@ public class News {
     public String getAuthor(){
         return author;
     }
-    public LocalDate getPublishDate(){
+    public String getPublisher(){
+        return publisher;
+    }
+    public Timestamp getPublishDate(){
         return publishdate;
     }
     public String getURL(){
-        return URL;
+        return url;
     }
-    public LocalDate getCreationDate(){
+    public Timestamp getCreationDate(){
         return creationdate;
     }
-    public LocalDate getLastEdit(){
+    public Timestamp getLastEdit(){
         return lastedit;
     }
     public String getLanguage(){
@@ -80,12 +82,7 @@ public class News {
         return coverimage;
     }
     //Setterek
-    public void setId(int id){
-        if(id <=0){
-            throw new IllegalArgumentException("Az ID nagyobb kell legyen 0-nal!");
-        }
-        this.id = id;
-    }
+    
     public void setTitle(String title){
         if(title == null || title.isBlank()){
             throw new IllegalArgumentException("A cim nem lehet ures!");
@@ -93,9 +90,6 @@ public class News {
         this.title = title;
     }
     public void setDescription(String description){
-        if(description == null || description.isBlank()){
-            throw new IllegalArgumentException("A leiras nem lehet ures!");
-        }
         this.description = description;
     }
     public void setSource(String source){
@@ -105,46 +99,45 @@ public class News {
         this.source = source;
     }
     public void setAuthor(String author){
-        if(author == null || author.isBlank()){
-            throw new IllegalArgumentException("A szerzo nem lehet ures!");
-        }
         this.author = author;
     }
-    public void setPublishDate(LocalDate publishdate){
-        if(publishdate == null){
-            throw new IllegalArgumentException("A kiadasi datum nem lehet ures");
-        }
+    public void setPublisher(String publisher){
+        this.publisher = publisher;
+    }
+    public void setPublishDate(Timestamp publishdate){
         this.publishdate = publishdate;
     }
-    public void setURL(String URL){
-        if(URL == null || URL.isBlank()){
+    public void setURL(String url){
+        if(url == null || url.isBlank()){
             throw new IllegalArgumentException("A URL nem lehet ures");
         }
-        this.URL = URL;
+        this.url = url;
     }
-    public void setCreationDate(LocalDate creationdate){
+    public void setCreationDate(Timestamp creationdate){
         if(creationdate == null){
             throw new IllegalArgumentException("A letrehozasi datum nem lehet ures!");
         }
         this.creationdate = creationdate;
     }
-    public void setLastEdit(LocalDate lastedit){
+    public void setLastEdit(Timestamp lastedit){
         if(lastedit == null){
             throw new IllegalArgumentException("Az utolso modositasi datum nem lehet ures!");
     }
         this.lastedit = lastedit;
     }
     public void setLanguage(String language){
-        if((language.equals("RO")) ||(language.equals("HU")) ){
+        if("RO".equals(language) || "HU".equals(language)){
             this.language = language;
-        }else {
-        throw new IllegalArgumentException("A nyelv csak RO vagy HU lehet");
+        }else{
+            throw new IllegalArgumentException("A nyelv csak RO vagy HU lehet.");
         }
-    }    
+    }
     public void setCoverImage(String coverimage){
         if(coverimage == null || coverimage.isBlank()){
-            throw new IllegalArgumentException("A boritokep nem lehet ures");
+            this.coverimage = "res/images/default.jpg";
+        }else{
+            this.coverimage = coverimage;    
         }
-        this.coverimage = coverimage;
+        
     }
 }

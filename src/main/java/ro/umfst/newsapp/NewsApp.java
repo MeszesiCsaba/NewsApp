@@ -15,6 +15,8 @@ import java.sql.SQLException;
 public class NewsApp {
 
     public static void main(String[] args) {
+        
+        /*
         try {
             Connection connection = Database.getConnection();
             
@@ -24,6 +26,14 @@ public class NewsApp {
         } catch (SQLException e){
             System.out.println("Database connection failed!");
             System.out.println(e.getMessage());
+        }
+*/      
+        
+        try {
+            Database.createTables();
+            System.out.println("Database tables created successfully.");
+        } catch (SQLException e) {
+            System.out.println("Database error: " + e.getMessage());
         }
     }
 }

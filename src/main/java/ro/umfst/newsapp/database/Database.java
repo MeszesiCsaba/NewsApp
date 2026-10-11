@@ -7,6 +7,7 @@ package ro.umfst.newsapp.database;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.io.File;
 
 /**
  *
@@ -27,5 +28,48 @@ public class Database {
     public static Connection getConnection() throws SQLException{
         return DriverManager.getConnection(URL);
     }
-        
+    public static boolean databaseExists(){
+        File database = new File("newsapp.db");
+        return database.exists();
+    } 
+    public static void createTables() throws SQLException {
+         String newsSQL = "CREATE TABLE IF NOT EXISTS news ("
+            + "title TEXT NOT NULL,"
+            + "description TEXT,"
+            + "source TEXT NOT NULL,"
+            + "author TEXT,"
+            + "publisher TEXT,"
+            + "publish_date TIMESTAMP,"
+            + "url TEXT NOT NULL,"
+            + "creation_date TIMESTAMP NOT NULL,"
+            + "last_modified_date TIMESTAMP NOT NULL,"
+            + "language TEXT NOT NULL,"
+            + "cover_image TEXT,"
+            + "PRIMARY KEY (source, url)"
+            + ")";
+
+    String eventsSQL = "CREATE TABLE IF NOT EXISTS events ("
+            + "title TEXT NOT NULL,"
+            + "description TEXT,"
+            + "source TEXT NOT NULL,"
+            + "author TEXT,"
+            + "publisher TEXT,"
+            + "publish_date TIMESTAMP,"
+            + "url TEXT NOT NULL,"
+            + "creation_date TIMESTAMP NOT NULL,"
+            + "last_modified_date TIMESTAMP NOT NULL,"
+            + "language TEXT NOT NULL,"
+            + "cover_image TEXT,"
+            + "event_datetime TIMESTAMP NOT NULL,"
+            + "location TEXT NOT NULL,"
+            + "PRIMARY KEY (title, event_datetime, location)"
+            + ")";
+
+    try (Connection connection = getConnection();
+         java.sql.Statement statement = connection.createStatement()) {
+
+        statement.execute(newsSQL);
+        statement.execute(eventsSQL);
+        }
+    }
 }
