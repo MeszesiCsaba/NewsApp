@@ -5,9 +5,14 @@
 package ro.umfst.newsapp;
 
 
+import ro.umfst.newsapp.rss.RSSConfigReader;
+import ro.umfst.newsapp.rss.RSSSource;
+import ro.umfst.newsapp.rss.RSSHttpClient;
+import ro.umfst.newsapp.rss.RSSParser;
+
 import ro.umfst.newsapp.database.DatabaseManager;
 import ro.umfst.newsapp.database.Database;
-import java.sql.Connection;
+
 import java.sql.SQLException;
 import java.util.List;
 import java.io.IOException;
@@ -19,20 +24,7 @@ import java.io.IOException;
 public class NewsApp {
 
     public static void main(String[] args) {
-        
-        /*
-        try {
-            Connection connection = Database.getConnection();
-            
-            System.out.println("Database connection succesful!");
-            
-            connection.close();
-        } catch (SQLException e){
-            System.out.println("Database connection failed!");
-            System.out.println(e.getMessage());
-        }
-*/      
-        
+   
         try {
             Database.createTables();
             System.out.println("Database tables created successfully.");
@@ -48,55 +40,60 @@ public class NewsApp {
             
             List<RSSSource> sources = RSSConfigReader.readSources();
 
-            System.out.println("RSS sources loaded: " + sources.size());
+            System.out.println("RSS sources loaded: " + sources.size()); 
+            
 
-            
-            
-            System.out.println("\nChecking RSS source status codes:");
-            
-            
+            int savedCount = 0;
+            int skippedCount = 0;
 
             for (RSSSource source : sources) {
-                int statusCode = RSSHttpClient.getStatusCode(source.getURL());
-
-                System.out.println(
-                        source.getName() + " - HTTP status: " + statusCode
-                );
-            }
-            
-            if (!sources.isEmpty()) {
-                RSSSource source = sources.get(0);
-
                 try {
+                    System.out.println("Downloading: " + source.getName());
+
                     String content = RSSHttpClient.getContent(source.getURL());
-
-                    System.out.println("RSS download successful.");
-                    System.out.println(content.substring(
-                            0, Math.min(500, content.length())));
-                    
                     String language = RSSParser.getLanguage(content);
-                    System.out.println("Feed language: " + language);
-                    
+
+                    if (language == null) {
+                        System.out.println("Language not found. Skipping feed.");
+                        continue;
+                    }
+
                     List<News> parsedNews = RSSParser.parseNews(
-                    content,
-                    source.getName(),
-                    language
-            );
+                            content,
+                            source.getName(),
+                            language
+                    );
 
-            System.out.println("Parsed news articles: " + parsedNews.size());
+                    for (News news : parsedNews) {
+                        News existingNews = DatabaseManager.getNews(
+                                news.getSource(),
+                                news.getURL()
+                        );
 
-            if (!parsedNews.isEmpty()) {
-                System.out.println("First title: " + parsedNews.get(0).getTitle());
-}
+                        if (existingNews == null) {
+                            DatabaseManager.addNews(news);
+                            savedCount++;
+                        } else {
+                            skippedCount++;
+                        }
+                    }
+
+                    System.out.println(
+                            "Processed " + parsedNews.size()
+                            + " news articles from " + source.getName()
+                    );
+
                 } catch (Exception e) {
-                    System.out.println("RSS download failed: " + e.getMessage());
+                    System.out.println(
+                            "Could not process " + source.getName()
+                            + ": " + e.getMessage()
+                    );
                 }
             }
 
-
-            for (RSSSource source : sources) {
-                System.out.println(source);
-            }
+            System.out.println("New articles saved: " + savedCount);
+            System.out.println("Existing articles skipped: " + skippedCount);
+            
         } catch (SQLException | IOException e) {
             System.out.println("Application error: " + e.getMessage());
         }
