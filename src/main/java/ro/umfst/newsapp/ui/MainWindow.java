@@ -10,6 +10,8 @@ import ro.umfst.newsapp.database.DatabaseManager;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
+import javax.swing.ImageIcon;
+import java.io.File;
 
 import ro.umfst.newsapp.rss.RSSConfigReader;
 import ro.umfst.newsapp.rss.RSSSource;
@@ -34,6 +36,8 @@ public class MainWindow extends JFrame {
     private JButton addButton;
     private JButton editButton;
     private JButton deleteButton;
+    private JButton clearButton;
+    private JProgressBar loadingBar;
     
     public MainWindow(){
         
@@ -73,6 +77,13 @@ public class MainWindow extends JFrame {
         newsDetails.setFont(new Font("SansSerif", Font.PLAIN, 15));
 
         JScrollPane detailsScrollPane = new JScrollPane(newsDetails);
+        
+        JLabel coverImageLabel = new JLabel();
+        coverImageLabel.setHorizontalAlignment(SwingConstants.CENTER);
+
+        JPanel detailsPanel = new JPanel(new BorderLayout());
+        detailsPanel.add(coverImageLabel, BorderLayout.NORTH);
+        detailsPanel.add(new JScrollPane(newsDetails), BorderLayout.CENTER);
 
         // Display the selected article's details.
         newsList.addListSelectionListener(event -> {
@@ -90,6 +101,20 @@ public class MainWindow extends JFrame {
                             + "\nURL: " + selectedNews.getURL()
                     );
                     newsDetails.setCaretPosition(0);
+                    String imagePath = selectedNews.getCoverImage();
+
+                    if (imagePath == null || imagePath.isBlank()
+                            || !new File(imagePath).exists()) {
+                        imagePath = "res/images/default.jpg";
+                    }
+
+                    ImageIcon icon = new ImageIcon(imagePath);
+
+                    Image scaledImage = icon.getImage().getScaledInstance(
+                            240, 140, Image.SCALE_SMOOTH
+                    );
+
+                    coverImageLabel.setIcon(new ImageIcon(scaledImage));
                 }
             }
         });
@@ -98,7 +123,7 @@ public class MainWindow extends JFrame {
         JSplitPane splitPane = new JSplitPane(
                 JSplitPane.HORIZONTAL_SPLIT,
                 listScrollPane,
-                detailsScrollPane
+                detailsPanel
         );
 
         splitPane.setDividerLocation(330);
@@ -114,6 +139,11 @@ public class MainWindow extends JFrame {
         buttonPanel.add(addButton);
         buttonPanel.add(editButton);
         buttonPanel.add(deleteButton);
+        
+        clearButton = new JButton("Clear Database");
+        buttonPanel.add(clearButton);
+
+        clearButton.addActionListener(e -> clearDatabase());
         
         // Connect buttons to their actions.
         addButton.addActionListener(e -> addNews());
@@ -140,8 +170,18 @@ public class MainWindow extends JFrame {
 
         // Show the current status.
         statusLabel = new JLabel("Ready");
-        searchPanel.add(statusLabel, BorderLayout.SOUTH);
 
+        loadingBar = new JProgressBar();
+        loadingBar.setIndeterminate(true);
+        loadingBar.setVisible(false);
+        loadingBar.setPreferredSize(new Dimension(120, 12));
+
+        JPanel statusPanel = new JPanel(new BorderLayout(10, 0));
+        statusPanel.add(statusLabel, BorderLayout.CENTER);
+        statusPanel.add(loadingBar, BorderLayout.EAST);
+
+        searchPanel.add(statusPanel, BorderLayout.SOUTH);
+        
         add(searchPanel, BorderLayout.NORTH);
         // Filter news while the user types.
         searchField.getDocument().addDocumentListener(
@@ -237,6 +277,7 @@ public class MainWindow extends JFrame {
     private void refreshNews() {
         refreshButton.setEnabled(false);
         statusLabel.setText("Refreshing news...");
+        loadingBar.setVisible(true);
 
         SwingWorker<Integer, Void> worker =
                 new SwingWorker<Integer, Void>() {
@@ -277,6 +318,21 @@ public class MainWindow extends JFrame {
                             if (existingNews == null) {
                                 DatabaseManager.addNews(news);
                                 savedCount++;
+                            } else if (
+                                    (existingNews.getAuthor() == null
+                                    || existingNews.getAuthor().isBlank())
+                                    && news.getAuthor() != null
+                                    && !news.getAuthor().isBlank()
+                            ) {
+                                existingNews.setAuthor(news.getAuthor());
+
+                                existingNews.setLastEdit(
+                                        new java.sql.Timestamp(
+                                                System.currentTimeMillis()
+                                        )
+                                );
+
+                                DatabaseManager.updateNews(existingNews);
                             }
                         }
 
@@ -317,7 +373,9 @@ public class MainWindow extends JFrame {
                     );
 
                 } finally {
+                    loadingBar.setVisible(false);
                     refreshButton.setEnabled(true);
+
                 }
             }
         };
@@ -527,5 +585,41 @@ public class MainWindow extends JFrame {
             }
         }
     }
+    
+    /**
+     * Clears all news after user confirmation.
+     */
+    private void clearDatabase() {
+        int result = JOptionPane.showConfirmDialog(
+                this,
+                "Are you sure you want to delete ALL news articles?",
+                "Confirm database clearing",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE
+        );
+
+        if (result == JOptionPane.YES_OPTION) {
+            try {
+                DatabaseManager.clearNews();
+
+                loadNews();
+                newsDetails.setText("");
+
+                JOptionPane.showMessageDialog(
+                        this,
+                        "All news articles have been deleted."
+                );
+
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(
+                        this,
+                        "Could not clear the database: " + e.getMessage(),
+                        "Database Error",
+                        JOptionPane.ERROR_MESSAGE
+                );
+            }
+        }
+    }
+
 
 }

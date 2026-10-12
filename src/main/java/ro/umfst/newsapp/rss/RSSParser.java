@@ -14,8 +14,8 @@ import org.w3c.dom.NodeList;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
-import org.w3c.dom.Node;
 import ro.umfst.newsapp.News;
+
 /**
  *
  * @author mcsab
@@ -53,6 +53,8 @@ public class RSSParser {
         List<News> newsList = new ArrayList<>();
         
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        factory.setNamespaceAware(true);
+        
     factory.setFeature(
             "http://apache.org/xml/features/disallow-doctype-decl",
             true
@@ -75,10 +77,28 @@ public class RSSParser {
         String title = getElementText(item, "title");
         String description = getElementText(item, "description");
         String url = getElementText(item, "link");
-        String author = getElementText(item, "author");
+        
+        
+        String author = null;
+        
+        NodeList authors = item.getElementsByTagNameNS("*", "author");
 
+        if (authors.getLength() > 0) {
+            author = authors.item(0).getTextContent().trim();
+        }
+
+        // If author is missing, try creator, including dc:creator.
         if (author == null || author.isBlank()) {
-            author = getElementText(item, "creator");
+            NodeList creators = item.getElementsByTagNameNS("*", "creator");
+
+            if (creators.getLength() > 0) {
+                author = creators.item(0).getTextContent().trim();
+            }
+        }
+
+        // Keep null if no author was found.
+        if (author != null && author.isBlank()) {
+            author = null;
         }
 
         String dateText = getElementText(item, "pubDate");
@@ -117,7 +137,6 @@ public class RSSParser {
                 language,
                 null
         );
-
         newsList.add(news);
     }
 
@@ -141,6 +160,28 @@ public class RSSParser {
             return null;
         }
 
-        return value.trim();
+         value = value.trim();
+
+        // Remove HTML tags from the text.
+        value = value.replaceAll("<[^>]*>", " ");
+
+        // Replace common HTML entities with readable characters.
+        value = value.replace("&nbsp;", " ");
+        value = value.replace("&#160;", " ");
+        value = value.replace("&amp;", "&");
+        value = value.replace("&quot;", "\"");
+        value = value.replace("&#39;", "'");
+        value = value.replace("&lt;", "<");
+        value = value.replace("&gt;", ">");
+        value = value.replace("&#8230;", "…");
+        value = value.replace("&#8217;", "’");
+        value = value.replace("&#8211;", "–");
+        value = value.replace("&#8212;", "—");
+        value = value.replace("&apos;", "'");
+
+        // Remove unnecessary spaces and line breaks.
+        value = value.replaceAll("\\s+", " ").trim();
+
+        return value.isEmpty() ? null : value;
         }
     }

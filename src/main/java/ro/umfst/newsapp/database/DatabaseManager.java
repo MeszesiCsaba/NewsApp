@@ -305,4 +305,18 @@ public class DatabaseManager {
             statement.executeUpdate();
         }
     }
+    
+    /**
+     * Deletes all news articles from the database.
+     */
+    public static void clearNews() throws SQLException {
+        String sql = "DELETE FROM news";
+
+        try (Connection connection = Database.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.executeUpdate();
+        }
+    }
+
 }
