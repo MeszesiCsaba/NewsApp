@@ -53,6 +53,12 @@ public class MainWindow extends JFrame {
         // Show only the title of each news article in the list.
         newsList.setCellRenderer((list, news, index, selected, focus) -> {
             JLabel label = new JLabel(news.getTitle());
+            if (news.isRead()) {
+                label.setFont(new Font("SansSerif", Font.PLAIN, 14));
+            } else {
+                label.setFont(new Font("SansSerif", Font.BOLD, 14));
+            }
+            
             label.setOpaque(true);
             label.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
@@ -91,6 +97,11 @@ public class MainWindow extends JFrame {
                 News selectedNews = newsList.getSelectedValue();
 
                 if (selectedNews != null) {
+                    
+                    selectedNews.setRead(true);
+                    newsList.repaint();
+                    
+                    newsDetails.setFont(new Font("Serif", Font.PLAIN, 17));
                     newsDetails.setText(
                             "Title: " + selectedNews.getTitle()
                             + "\n\nDescription: "
@@ -101,24 +112,52 @@ public class MainWindow extends JFrame {
                             + "\nURL: " + selectedNews.getURL()
                     );
                     newsDetails.setCaretPosition(0);
+                    
                     String imagePath = selectedNews.getCoverImage();
-
-                    if (imagePath == null || imagePath.isBlank()
-                            || !new File(imagePath).exists()) {
-                        imagePath = "res/images/default.jpg";
+                    Image image = null;
+                    
+                    try{
+                        
+                    if (imagePath != null && !imagePath.isBlank()) {
+                        if(imagePath.startsWith("http://")
+                                || imagePath.startsWith("https://")){
+                            image = javax.imageio.ImageIO.read(new java.net.URL(imagePath));
+                        }else{
+                            File imageFile = new File(imagePath);
+                            
+                            if(imageFile.exists()){
+                                image = javax.imageio.ImageIO.read(imageFile);
+                            }
+                        }
                     }
-
-                    ImageIcon icon = new ImageIcon(imagePath);
-
-                    Image scaledImage = icon.getImage().getScaledInstance(
-                            240, 140, Image.SCALE_SMOOTH
+                }catch (Exception ex){
+                     System.out.println("Could not load cover image: " + ex.getMessage());
+                }
+                if (image == null) {
+                try {
+                    image = javax.imageio.ImageIO.read(
+                            new File("res/images/default.jpg")
                     );
-
-                    coverImageLabel.setIcon(new ImageIcon(scaledImage));
+                } catch (Exception ex) {
+                    System.out.println("Could not load default image: "
+                            + ex.getMessage());
                 }
             }
-        });
 
+        if (image != null) {
+            Image scaledImage = image.getScaledInstance(
+                    240, 140, Image.SCALE_SMOOTH
+            );
+
+            coverImageLabel.setIcon(new ImageIcon(scaledImage));
+        } else {
+            coverImageLabel.setIcon(null);
+            }
+        
+            }
+        }
+    });
+                
         // Place the list and details side by side.
         JSplitPane splitPane = new JSplitPane(
                 JSplitPane.HORIZONTAL_SPLIT,
@@ -620,6 +659,4 @@ public class MainWindow extends JFrame {
             }
         }
     }
-
-
 }

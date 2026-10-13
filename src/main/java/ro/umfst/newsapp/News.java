@@ -12,6 +12,7 @@ public class News extends ContentItem{
     
     private String source;
     private String url;
+    private boolean read = false;
     
     public News(
             String title,
@@ -49,7 +50,9 @@ public class News extends ContentItem{
     public String getURL(){
         return url;
     }
-   
+    public boolean isRead() {
+        return read;
+    }
     
     //Setterek
     
@@ -66,6 +69,9 @@ public class News extends ContentItem{
             throw new IllegalArgumentException("A URL nem lehet ures");
         }
         this.url = url;
+    }
+    public void setRead(boolean read) {
+        this.read = read;
     }
     
     
