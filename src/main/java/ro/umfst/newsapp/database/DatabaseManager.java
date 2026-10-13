@@ -159,7 +159,7 @@ public class DatabaseManager {
 }
     
     //Events 
-    
+    /*
     public static void addEvent(Event event) throws SQLException {
 
         String sql = "INSERT INTO events ("
@@ -305,7 +305,7 @@ public class DatabaseManager {
             statement.executeUpdate();
         }
     }
-    
+    */
     /**
      * Deletes all news articles from the database.
      */

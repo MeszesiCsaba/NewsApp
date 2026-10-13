@@ -121,7 +121,8 @@ public class RSSParser {
                 || url == null || url.isBlank()) {
             continue;
         }
-
+        String coverImage = getImageUrl(item, url);
+        
         Timestamp now = new Timestamp(System.currentTimeMillis());
 
         News news = new News(
@@ -135,7 +136,7 @@ public class RSSParser {
                 now,
                 now,
                 language,
-                null
+                coverImage
         );
         newsList.add(news);
     }
@@ -184,4 +185,61 @@ public class RSSParser {
 
         return value.isEmpty() ? null : value;
         }
+    
+    private static String getImageUrl(Element item, String articleUrl) {
+        String imageUrl = null;
+
+        // 1. Try media:content and media:thumbnail.
+        String[] imageTags = {"content", "thumbnail"};
+
+        for (String tag : imageTags) {
+            NodeList nodes = item.getElementsByTagNameNS("*", tag);
+
+            for (int i = 0; i < nodes.getLength(); i++) {
+                Element element = (Element) nodes.item(i);
+                String candidate = element.getAttribute("url");
+
+                if (candidate != null && !candidate.isBlank()) {
+                    imageUrl = candidate.trim();
+                    break;
+                }
+            }
+
+            if (imageUrl != null) {
+                break;
+            }
+        }
+
+        // 2. Try enclosure, commonly used for media attachments.
+        if (imageUrl == null) {
+            NodeList enclosures =
+                    item.getElementsByTagName("enclosure");
+
+            for (int i = 0; i < enclosures.getLength(); i++) {
+                Element enclosure = (Element) enclosures.item(i);
+                String type = enclosure.getAttribute("type");
+                String candidate = enclosure.getAttribute("url");
+
+                if (candidate != null && !candidate.isBlank()
+                        && type.toLowerCase().startsWith("image/")) {
+                    imageUrl = candidate.trim();
+                    break;
+                }
+            }
+        }
+
+        // 3. Resolve relative image URLs, if necessary.
+        if (imageUrl != null) {
+            try {
+                return new java.net.URL(
+                        new java.net.URL(articleUrl), imageUrl
+                ).toString();
+            } catch (Exception ex) {
+                return imageUrl;
+            }
+        }
+
+        return null;
+    }
+
     }
